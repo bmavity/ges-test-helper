@@ -46,7 +46,7 @@ module.exports = function createMemoryEventStore(args, cb) {
 
 function getArgsArray(args) {
 	var allArgs = ['--mem-db']
-	if(args.ip) allArgs.push('--ip=' + args.ip) 
-	if(args.tcpPort) allArgs.push('--tcp-port=' + args.tcpPort) 
+	if(args.ip) allArgs.push('--ext-ip=' + args.ip) 
+	if(args.tcpPort) allArgs.push('--ext-tcp-port=' + args.tcpPort) 
 	return allArgs
 }
