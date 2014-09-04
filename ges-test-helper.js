@@ -1,6 +1,6 @@
 var spawn = require('child_process').spawn
 	, path = require('path')
-	, cmdDir = path.resolve(__dirname, 'EventStore')
+	, cmdDir = process.env.ES_BIN || path.resolve(__dirname, 'EventStore')
 	, cmd = path.resolve(cmdDir, 'clusternode')
 	, opts = {
 			cwd: cmdDir
@@ -9,6 +9,8 @@ var spawn = require('child_process').spawn
 			, 'MONO_GC_DEBUG': 'clear-at-gc'
 			}
 		}
+
+console.log('Environment: ', process.env.ES_BIN)
 
 module.exports = function createMemoryEventStore(args, cb) {
 	if(!cb && typeof args === 'function') {
