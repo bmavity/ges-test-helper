@@ -10,7 +10,7 @@ var spawn = require('child_process').spawn
 			}
 		}
 
-console.log('Environment: ', process.env.ES_BIN)
+//console.log('Environment: ', process.env.ES_BIN)
 
 module.exports = function createMemoryEventStore(args, cb) {
 	if(!cb && typeof args === 'function') {
@@ -21,14 +21,15 @@ module.exports = function createMemoryEventStore(args, cb) {
 	var es = spawn(cmd, getArgsArray(args), opts)
 
 	es.stdout.on('data', function(data) {
-		console.log(data.toString())
-		if(data.toString().indexOf('Starting Normal TCP listening on TCP endpoint:') !== -1) {
+		//console.log(data.toString())
+		//if(data.toString().indexOf('Starting Normal TCP listening on TCP endpoint:') !== -1) {
+		if(data.toString().indexOf("'$users' projection source has been written") !== -1) {
 			cb(null, es)
 		}
 	})
 
 	es.stderr.on('data', function(data) {
-		console.log(data.toString())
+		//console.log(data.toString())
 		cb(data.toString())
 	})
 
