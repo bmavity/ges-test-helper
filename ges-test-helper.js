@@ -1,5 +1,6 @@
 var spawn = require('child_process').spawn
 	, path = require('path')
+	, external = require('./externalStore')
 	, cmdDir = process.env.ES_BIN || path.resolve(__dirname, 'EventStore')
 	, cmd = path.resolve(cmdDir, 'clusternode')
 	, opts = {
@@ -12,7 +13,10 @@ var spawn = require('child_process').spawn
 
 //console.log('Environment: ', process.env.ES_BIN)
 
-module.exports = function createMemoryEventStore(args, cb) {
+module.exports = createMemoryEventStore
+module.exports.external = external
+
+function createMemoryEventStore(args, cb) {
 	if(!cb && typeof args === 'function') {
 		cb = args
 		args = {}
