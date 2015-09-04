@@ -98,7 +98,16 @@ MemoryStore.prototype.cleanup = function(cb) {
 		me._removeHandlers()
 		cb()
 	})
-	this._close()
+
+	function closeGes() {
+		me._close()
+	}
+
+	if(this._con) {
+		this._con.close(closeGes)
+	} else {
+		closeGes()
+	}
 }
 
 function getSettings() {
