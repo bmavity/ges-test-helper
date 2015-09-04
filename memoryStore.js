@@ -22,49 +22,57 @@ function MemoryStore(done) {
 	}
 	EventEmitter.call(this)
 
-	var settings = getSettings()
-		, es = spawn(cmd, getArgsArray(settings), opts)
-		, isIntialized = false
-		, me = this
+	var me = this
+	initializeGesProcess()
 
-	this._es = es
+	function initializeGesProcess() {
+		var settings = getSettings()
+			, es = spawn(cmd, getArgsArray(settings), opts)
+			, isIntialized = false
 
-	es.stdout.on('data', function(data) {
-		console.log(data.toString())
-		if(data.toString().indexOf("'$users' projection source has been written") !== -1) {
-			isIntialized = true
-			done(null, {
-				host: settings.ip
-			, port: settings.tcpPort
-			})
-		}
-	})
+		me._es = es
 
-	es.stderr.on('data', function(data) {
-		console.log(data.toString())
-		var err = data.toString()
-		cb(data.toString())
-		if(isIntialized) {
-			me.emit('error', err)
-			me._close()
-		} else {
-			done(err)
-		}
-	})
+		es.stdout.on('data', function(data) {
+			//console.log('[LOG] : ' + data.toString())
+			var logLine = data.toString()
+			if(logLine.indexOf("'$users' projection source has been written") !== -1) {
+				isIntialized = true
+				done(null, {
+					host: settings.ip
+				, port: settings.tcpPort
+				})
+			} else if(logLine.indexOf('Exit reason: Address already in use') !== -1) {
+				me._removeHandlers()
+				initializeGesProcess()
+			}
+		})
 
-	es.on('close', function(signal) {
-		console.log('passive', arguments)
-		me._removeHandlers()
-	})
+		es.stderr.on('data', function(data) {
+			//console.log('[ERR] : ' + data.toString())
+			var err = data.toString()
+			cb(data.toString())
+			if(isIntialized) {
+				me.emit('error', err)
+				me._close()
+			} else {
+				done(err)
+			}
+		})
 
-	es.on('error', function(err) {
-		if(isIntialized) {
-			me.emit('error', err)
-			me._close()
-		} else {
-			done(err)
-		}
-	})
+		es.on('close', function(signal) {
+			//console.log('passive', arguments)
+			me._removeHandlers()
+		})
+
+		es.on('error', function(err) {
+			if(isIntialized) {
+				me.emit('error', err)
+				me._close()
+			} else {
+				done(err)
+			}
+		})
+	}
 }
 util.inherits(MemoryStore, EventEmitter)
 
@@ -74,6 +82,8 @@ MemoryStore.prototype._close = function() {
 
 MemoryStore.prototype._removeHandlers = function() {
 	this._es.removeAllListeners()
+	this._es.stdin.removeAllListeners()
+	this._es.stdout.removeAllListeners()
 }
 
 MemoryStore.prototype.addConnection = function(con) {
@@ -84,7 +94,7 @@ MemoryStore.prototype.cleanup = function(cb) {
 	var me = this
 	this._es.removeAllListeners('close')
 	this._es.on('close', function(signal) {
-		console.log('in handler',arguments)
+		//console.log('in handler',arguments)
 		me._removeHandlers()
 		cb()
 	})
