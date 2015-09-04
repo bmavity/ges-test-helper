@@ -92,12 +92,31 @@ MemoryStore.prototype.addConnection = function(con) {
 
 MemoryStore.prototype.cleanup = function(cb) {
 	var me = this
+		, isClosed = false
 	this._es.removeAllListeners('close')
+	this._es.removeAllListeners('error')
+
+	function completeClose(msg) {
+		if(!isClosed) {
+			if(msg) {
+				console.log(msg)
+			}
+			me._removeHandlers()
+			isClosed = true
+			cb()
+		}
+	}
+
 	this._es.on('close', function(signal) {
 		//console.log('in handler',arguments)
-		me._removeHandlers()
-		cb()
+		completeClose()
+	}).on('error', function(err) {
+		completeClose('Had error closing')
 	})
+
+	setTimeout(function() {
+		completeClose('Close timeout')
+	}, 5000)
 
 	function closeGes() {
 		me._close()
