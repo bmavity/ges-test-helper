@@ -16,6 +16,11 @@ var util = require('util')
 module.exports = MemoryStore
 
 
+function LogDebug(msg) {
+	//console.log(msg)
+}
+
+
 function MemoryStore(done) {
 	if(!(this instanceof MemoryStore)) {
     return new MemoryStore(done)
@@ -33,7 +38,7 @@ function MemoryStore(done) {
 		me._es = es
 
 		es.stdout.on('data', function(data) {
-			//console.log('[LOG] : ' + data.toString())
+			LogDebug('[LOG] : ' + data.toString())
 			var logLine = data.toString()
 			if(logLine.indexOf("'$users' projection source has been written") !== -1) {
 				isIntialized = true
@@ -48,7 +53,7 @@ function MemoryStore(done) {
 		})
 
 		es.stderr.on('data', function(data) {
-			//console.log('[ERR] : ' + data.toString())
+			LogDebug('[ERR] : ' + data.toString())
 			var err = data.toString()
 			cb(data.toString())
 			if(isIntialized) {
@@ -60,7 +65,12 @@ function MemoryStore(done) {
 		})
 
 		es.on('close', function(signal) {
-			//console.log('passive', arguments)
+			LogDebug('passive close', arguments)
+			me._removeHandlers()
+		})
+
+		es.on('exit', function(signal) {
+			LogDebug('passive exit', arguments)
 			me._removeHandlers()
 		})
 
@@ -97,18 +107,25 @@ MemoryStore.prototype.cleanup = function(cb) {
 	this._es.removeAllListeners('error')
 
 	function completeClose(msg) {
+		me._removeHandlers()
 		if(!isClosed) {
 			if(msg) {
-				console.log(msg)
+				LogDebug('COMPLETE CLOSE ERROR: ' + msg)
 			}
-			me._removeHandlers()
 			isClosed = true
 			cb()
 		}
 	}
 
+	this._es.stdout.on('data', function(data) {
+		LogDebug(data.toString())
+	})
+
 	this._es.on('close', function(signal) {
-		//console.log('in handler',arguments)
+		LogDebug('in close handler',arguments)
+		completeClose()
+	}).on('exit', function(signal) {
+		LogDebug('in exit handler',arguments)
 		completeClose()
 	}).on('error', function(err) {
 		completeClose('Had error closing')
@@ -123,6 +140,7 @@ MemoryStore.prototype.cleanup = function(cb) {
 	}
 
 	if(this._con) {
+		LogDebug('closing connection')
 		this._con.close(closeGes)
 	} else {
 		closeGes()
