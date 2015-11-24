@@ -22,5 +22,5 @@
   "keywords": [],
   "license": "MIT +no-false-attribs, +no-advertising License",
   "main": "./ges-test-helper.js",
-  "version": "0.10.0"
+  "version": "0.10.1"
 }
