@@ -137,11 +137,15 @@ MemoryStore.prototype.cleanup = function(cb) {
 
 	function closeGes() {
 		me._close()
+		if(this._con) {
+			this._con.removeAllListeners()
+		}
 	}
 
 	if(this._con) {
 		LogDebug('closing connection')
-		this._con.close(closeGes)
+		this._con.on('close', closeGes)
+		this._con.close()
 	} else {
 		closeGes()
 	}
